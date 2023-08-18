@@ -242,7 +242,6 @@ public class MybatisConvert extends JFrame {
 //                                    "FROM ALL_TAB_COLUMNS " +
 //                                    "WHERE TABLE_NAME = '" + tableNameCon + "' " +
 //                                    "AND COLUMN_NAME = '" + tableItemCon + "';";
-
                             String sql = "SELECT COLUMN_NAME, DATA_TYPE " +
                                     "FROM ALL_TAB_COLUMNS " +
                                     "WHERE TABLE_NAME = ? " +
