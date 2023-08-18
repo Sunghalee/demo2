@@ -1,7 +1,7 @@
 package com;
 
-import com.app.B2.B2lReader;
 import com.app.ccFlow.CcFlowModelReader;
+import com.app.dbTools.MybatisConvert;
 import com.app.srNsys.SrColumnGetSetReader;
 import com.app.srNsys.SrColumnModelReader;
 import com.jtattoo.plaf.acryl.AcrylLookAndFeel;
@@ -49,7 +49,7 @@ public class MainFrame {
             addButton(mainFrame, "SR-NSYS", e -> openFrameWithButtons("SR-NSYS"));
             addButton(mainFrame, "CC-FLOW", e -> openFrameWithButtons("CC-FLOW"));
             addButton(mainFrame, "B2", e -> openFrameWithButtons("B2"));
-            addButton(mainFrame, "C3", e -> openFrameWithButtons("C3"));
+            addButton(mainFrame, "mybatis", e -> openFrameWithButtons("mybatis"));
             addButton(mainFrame, "D4", e -> openFrameWithButtons("D4"));
             addButton(mainFrame, "E5", e -> openFrameWithButtons("E5"));
 
@@ -157,9 +157,9 @@ public class MainFrame {
                 // 打开B2的model生成画面
                 JOptionPane.showMessageDialog(mainFrame, "暂未开发", "警告", JOptionPane.WARNING_MESSAGE);
                 break;
-            case "C3":
-                // 打开C3的model生成画面
-                JOptionPane.showMessageDialog(mainFrame, "暂未开发", "警告", JOptionPane.WARNING_MESSAGE);
+            case "mybatis":
+                // 打开mybatis生成画面
+                MybatisConvert.action();
                 break;
             case "D4":
                 // 打开D4的model生成画面
