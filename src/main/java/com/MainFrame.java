@@ -23,7 +23,7 @@ public class MainFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-            mainFrame = new JFrame("Conversion Tool V3.0.1 By Sunghalee");
+            mainFrame = new JFrame("Conversion Tool V6.0.1 By Sunghalee");
 
             //设定图标样式
             createIcon();
@@ -49,7 +49,7 @@ public class MainFrame {
             addButton(mainFrame, "SR-NSYS", e -> openFrameWithButtons("SR-NSYS"));
             addButton(mainFrame, "CC-FLOW", e -> openFrameWithButtons("CC-FLOW"));
             addButton(mainFrame, "B2", e -> openFrameWithButtons("B2"));
-            addButton(mainFrame, "mybatis", e -> openFrameWithButtons("mybatis"));
+            addButton(mainFrame, "mybatis", e -> MybatisConvert.action());
             addButton(mainFrame, "D4", e -> openFrameWithButtons("D4"));
             addButton(mainFrame, "E5", e -> openFrameWithButtons("E5"));
 
