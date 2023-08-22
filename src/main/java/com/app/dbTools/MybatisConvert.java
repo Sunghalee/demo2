@@ -196,7 +196,7 @@ public class MybatisConvert extends JFrame {
                 readExcelAndShowOutput(selectedFile.getAbsolutePath());
 
                 String programId = convertToUpperCase(programName);
-                String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "Dto.java"};
+                String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
                 String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
                 generateAndSaveFiles(fileNames, generatedContents, programId);
             }
@@ -232,6 +232,7 @@ public class MybatisConvert extends JFrame {
             String programId = convertToUpperCase(programName);
             String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "Dto.java"};
             String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
+            JOptionPane.showMessageDialog(frame, "读取完成", "提示", JOptionPane.INFORMATION_MESSAGE);
             generateAndSaveFiles(fileNames, generatedContents, programId);
         }
     }
