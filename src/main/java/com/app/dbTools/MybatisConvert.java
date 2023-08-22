@@ -10,6 +10,8 @@ import org.apache.poi.ss.usermodel.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
@@ -28,6 +30,9 @@ public class MybatisConvert extends JFrame {
     private static JTextField sheetField;
     private static JTextField programNameField;
     private static JFrame frame;
+    private static StringBuilder xmlBuilder;
+    private static StringBuilder mapperBuilder;
+    private static StringBuilder searchDtoBuilder;
 
     // 默认的文件选择路径
     private static String lastSelectedFilePath = "D:\\";
@@ -104,51 +109,87 @@ public class MybatisConvert extends JFrame {
                 }
             }
         });
+
+        // 在窗口上绑定回车键
+        frame.getRootPane().setDefaultButton(startButton);
+
+        // 回车键事件
+        Action openFileChooserAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openFileChooser();
+            }
+        };
+
+        // 为整个窗口添加回车键绑定
+        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "openFileChooserAction"
+        );
+        frame.getRootPane().getActionMap().put("openFileChooserAction", openFileChooserAction);
+
+        // 添加ActionListener到具体输入框，实现点击回车也能触发选择问文件的事件
+//        tableNameField.addActionListener(e -> openFileChooser());
+//        tableItemField.addActionListener(e -> openFileChooser());
+//        tableItemCommentsField.addActionListener(e -> openFileChooser());
+//        sheetField.addActionListener(e -> openFileChooser());
+//        programNameField.addActionListener(e -> openFileChooser());
     }
 
+    /**
+     * 选择文件按钮
+     */
     private static JButton getjButton() {
         JButton startButton = new JButton("选择文件");
 
         //创建读取按钮的监听事件
         startButton.addActionListener(e -> {
-            String tableName = tableNameField.getText();
-            String tableItem = tableItemField.getText();
-            String tableItemComments = tableItemCommentsField.getText();
-            String sheetName = sheetField.getText();
-            String programName = programNameField.getText();
-
-            //输入校验
-            if (sheetName.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (tableName.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "テーブル名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (tableItem.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "テーブル項目ID", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (tableItemComments.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "テーブル項目名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (programName.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "程序名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else {
-                JFileChooser fileChooser = new JFileChooser(lastSelectedFilePath);
-                int result = fileChooser.showOpenDialog(null);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
-                    // 记住当前选择的路径
-                    lastSelectedFilePath = selectedFile.getParent();
-                    //开始读取
-                    readExcelAndShowOutput(selectedFile.getAbsolutePath());
-
-                    String[] fileNames = {programName + "Mapper.xml", programName + "Mapper.java", programName + "Dto.java"};
-                    String[] generatedContents = {outputTextArea.getText(), outputTextArea.getText(), outputTextArea.getText()};
-                    generateAndSaveFiles(fileNames, generatedContents, programName);
-                }
-            }
+            openFileChooser();
         });
         return startButton;
     }
 
     /**
-     * 生成文件
+     * 打开文件选择对话框的
+     */
+    private static void openFileChooser() {
+        // 获取输入的内容
+        String tableName = tableNameField.getText();
+        String tableItem = tableItemField.getText();
+        String tableItemComments = tableItemCommentsField.getText();
+        String sheetName = sheetField.getText();
+        String programName = programNameField.getText();
+
+        // 输入校验
+        if (sheetName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (tableName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入テーブル名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (tableItem.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入テーブル項目ID", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (tableItemComments.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入テーブル項目名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (programName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入程序名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JFileChooser fileChooser = new JFileChooser(lastSelectedFilePath);
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                // 记住当前选择的路径
+                lastSelectedFilePath = selectedFile.getParent();
+                // 开始读取
+                readExcelAndShowOutput(selectedFile.getAbsolutePath());
+
+                String programId = convertToUpperCase(programName);
+                String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "Dto.java"};
+                String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
+                generateAndSaveFiles(fileNames, generatedContents, programId);
+            }
+        }
+    }
+
+    /**
+     * 保存文件
      */
     private static void generateAndSaveFiles(String[] fileNames, String[] generatedContents, String folderPath) {
         JFileChooser folderChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
@@ -161,6 +202,27 @@ public class MybatisConvert extends JFrame {
             String selectedFolderPath = selectedFolder.getAbsolutePath() + File.separator + folderPath;
 
             File folder = new File(selectedFolderPath);
+
+            if (folder.exists() && folder.isDirectory()) {
+                // 如果文件夹已存在，询问用户是否覆盖
+                int choice = JOptionPane.showConfirmDialog(frame,
+                        "目标文件夹已存在，是否要覆盖？",
+                        "确认覆盖",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (choice == JOptionPane.YES_OPTION) {
+                    // 用户同意覆盖，删除现有文件夹及其内容
+                    deleteFolder(folder);
+                } else {
+                    // 用户选择不覆盖，要求用户输入新的文件夹名称
+                    String newFolderPath = askForNewFolderName(selectedFolderPath);
+                    if (newFolderPath == null) {
+                        return; // 用户取消了操作
+                    }
+                    folder = new File(newFolderPath);
+                }
+            }
+
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
                     JOptionPane.showMessageDialog(frame, "无法创建文件夹：" + folderPath, "错误", JOptionPane.ERROR_MESSAGE);
@@ -169,7 +231,7 @@ public class MybatisConvert extends JFrame {
             }
 
             for (int i = 0; i < fileNames.length; i++) {
-                String filePath = selectedFolderPath + File.separator + fileNames[i];
+                String filePath = folder.getAbsolutePath() + File.separator + fileNames[i];
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
                     writer.write(generatedContents[i]);
                     writer.flush();
@@ -178,8 +240,41 @@ public class MybatisConvert extends JFrame {
                 }
             }
 
-            JOptionPane.showMessageDialog(frame, "文件已保存至文件夹：" + selectedFolderPath, "提示", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "文件已保存至文件夹：" + folder.getAbsolutePath(), "提示", JOptionPane.INFORMATION_MESSAGE);
         }
+    }
+
+    /**
+     * 删除文件夹及其内容
+     */
+    private static void deleteFolder(File folder) {
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteFolder(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        folder.delete();
+    }
+
+    /**
+     * 询问用户输入新的文件夹名称
+     */
+    private static String askForNewFolderName(String defaultName) {
+        String newFolderName = JOptionPane.showInputDialog(frame,
+                "输入新的文件夹名称：",
+                "重命名文件夹",
+                JOptionPane.PLAIN_MESSAGE);
+
+        if (newFolderName != null && !newFolderName.isEmpty()) {
+            return defaultName.substring(0, defaultName.lastIndexOf(File.separator)) + File.separator + newFolderName;
+        }
+
+        return null; // 用户取消了输入
     }
 
     /**
@@ -207,16 +302,16 @@ public class MybatisConvert extends JFrame {
                 int tableItemIndex = getColumnIndex(tableItem);
                 int tableItemCommentsIndex = getColumnIndex(tableItemComments);
 
-                outputText.append("----------- 输出开始 -----------\n\n");
-
-
                 // 输出内容前添加中文多行注释
                 outputText.append("<?xml version=\"1.0\" encoding=\"Windows-31J\"?>\n");
                 outputText.append("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n");
-                outputText.append("<mapper namespace=\"nis.spro.seisan.common.dao.mapper.\" + programName + \"Mapper\">\n");
+                outputText.append("<mapper namespace=\"nis.spro.seisan.common.dao.mapper.").append(convertToUpperCase(programName)).append("Mapper\">\n");
                 outputText.append("<!--検索-->\n");
-                outputText.append("<resultMap id=\"" + programName + "SearchMap\" type=\"nis.spro.seisan.common.dto." + programName + "SearchDto\">\n");
+                outputText.append("<resultMap id=\"").append(convertToLowerCase(programName))
+                        .append("SearchMap\" type=\"nis.spro.seisan.common.dto.")
+                        .append(convertToUpperCase(programName)).append("SearchDto\">\n");
 
+                //创建DB连接
                 Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@10.4.2.179:1521/orcl", "ORATDIKO01", "password");
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = null;
@@ -285,10 +380,19 @@ public class MybatisConvert extends JFrame {
                 }
                 outputText.append("</resultMap>\n");
                 outputText.append("</mapper>\n");
-                outputText.append("\n----------- 输出结束 -----------\n");
 
                 outputText.append("\n\n");
 
+                //.xml对象
+                xmlBuilder = new StringBuilder();
+                xmlBuilder.append(outputText);
+
+                //mapper对象
+                mapperBuilder = new StringBuilder();
+                getMapperInfo(programName);
+
+                //.xml对象
+                searchDtoBuilder = new StringBuilder();
                 assert resultSet != null;
                 resultSet.close();
                 statement.close();
@@ -372,10 +476,84 @@ public class MybatisConvert extends JFrame {
     }
 
 
+    /**
+     * .
+     * DB查询
+     */
     private static String executeDbQuery() throws SQLException, ClassNotFoundException {
         StringBuilder dbOutput = new StringBuilder();
         DbConnectionService.nsysDdConnection(dbOutput);
         return dbOutput.toString();
+    }
+
+    /**
+     * .
+     * 首字母大写转换
+     */
+    private static String convertToUpperCase(String inputString) {
+        // 检查输入字符串是否为空
+        if (inputString == null || inputString.isEmpty()) {
+            return inputString;
+        }
+
+        // 将字符串的第一个字符大写，其余字符保持小写
+        String firstLetter = inputString.substring(0, 1).toUpperCase();
+        String restOfString = inputString.substring(1).toLowerCase();
+
+        return firstLetter + restOfString;
+    }
+
+    /**
+     * .
+     * 全部小写转换
+     */
+    public static String convertToLowerCase(String inputString) {
+        // 检查输入字符串是否为空
+        if (inputString == null) {
+            return null;
+        }
+
+        return inputString.toLowerCase();
+    }
+
+    /**
+     * .
+     * mapper Java对象转换
+     */
+    private static void getMapperInfo(String programName) {
+        StringBuilder mapper = new StringBuilder();
+        mapper.append("package nis.spro.seisan.common.dao.mapper;");
+        mapper.append("\n");
+        mapper.append(System.lineSeparator());
+        mapper.append("import java.util.List;");
+        mapper.append(System.lineSeparator());
+        mapper.append("import java.util.Map;");
+        mapper.append("\n");
+        mapper.append(System.lineSeparator());
+        mapper.append("import org.apache.ibatis.annotations.Param;");
+        mapper.append("\n");
+        mapper.append(System.lineSeparator());
+        mapper.append("import nis.spro.seisan.common.dto.").append(convertToUpperCase(programName)).append("SearchDto;");
+        mapper.append("\n");
+        mapper.append(System.lineSeparator());
+        mapper.append("public interface ").append(convertToUpperCase(programName)).append("Mapper {");
+        mapper.append("\n");
+        mapper.append(System.lineSeparator());
+        mapper.append("   /**");
+        mapper.append(System.lineSeparator());
+        mapper.append("    * 検索");
+        mapper.append(System.lineSeparator());
+        mapper.append("    *");
+        mapper.append(System.lineSeparator());
+        mapper.append("    */");
+        mapper.append(System.lineSeparator());
+        mapper.append("   List<").append(convertToUpperCase(programName))
+                .append("SearchDto> select").append(convertToUpperCase(programName)).append("List(@Param(\"params\") Map<String, Object> map);");
+        mapper.append("\n");
+        mapper.append(System.lineSeparator());
+        mapper.append("}");
+
+        mapperBuilder = mapper;
     }
 
 }
