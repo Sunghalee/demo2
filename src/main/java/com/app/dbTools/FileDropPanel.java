@@ -63,14 +63,23 @@ public class FileDropPanel extends JPanel {
         setDropTarget(dropTarget);
     }
 
+    /**
+     * 获取监听对象
+     */
     public void addFileDropListener(ActionListener listener) {
         fileDropListener = listener;
     }
 
+    /**
+     * 获取文件绝对路径
+     */
     public String getDroppedFilePath() {
         return droppedFilePath;
     }
 
+    /**
+     * 窗口UI
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
