@@ -10,10 +10,7 @@ import org.apache.poi.ss.usermodel.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.sql.*;
 
@@ -56,16 +53,17 @@ public class MybatisConvert extends JFrame {
 
         //关闭只关闭当前窗口，不结束程序运行
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(600, 600);
+        frame.setSize(500, 400);
         frame.setLayout(new BorderLayout());
 
         outputTextArea = new JTextArea();
         outputTextArea.setEditable(false);
+
         //设定滚动条位置 便于输出结束时查看结果
         JScrollPane scrollPane = new JScrollPane(outputTextArea);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+        JPanel inputPanel = new JPanel(new GridLayout(5, 1));
 
         //实例化4个输入窗口
         sheetField = new JTextField();
@@ -90,10 +88,25 @@ public class MybatisConvert extends JFrame {
         JButton startButton = getjButton();
         frame.add(startButton, BorderLayout.SOUTH);
 
+        // 创建一个面板作为可拖拽区域
+        FileDropPanel dropPanel = new FileDropPanel();
+        frame.add(dropPanel, BorderLayout.CENTER);
+
+        // 添加文件拖放事件监听器
+        dropPanel.addFileDropListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // 处理文件拖放读取
+                System.out.println("1!");
+
+                // 获取文件路径
+                String filePath = dropPanel.getDroppedFilePath();
+                fileDrop(filePath);
+            }
+        });
+
         // 让窗口在屏幕中央显示
         frame.setLocationRelativeTo(null);
-
-        frame.setVisible(true);
 
         // 添加窗口关闭监听器
         frame.addWindowListener(new WindowAdapter() {
@@ -133,6 +146,8 @@ public class MybatisConvert extends JFrame {
 //        tableItemCommentsField.addActionListener(e -> openFileChooser());
 //        sheetField.addActionListener(e -> openFileChooser());
 //        programNameField.addActionListener(e -> openFileChooser());
+
+        frame.setVisible(true);
     }
 
     /**
@@ -149,7 +164,7 @@ public class MybatisConvert extends JFrame {
     }
 
     /**
-     * 打开文件选择对话框的
+     * 打开文件选择对话框并读取
      */
     private static void openFileChooser() {
         // 获取输入的内容
@@ -185,6 +200,39 @@ public class MybatisConvert extends JFrame {
                 String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
                 generateAndSaveFiles(fileNames, generatedContents, programId);
             }
+        }
+    }
+
+
+    /**
+     * 拖拽打开文件并读取
+     */
+    private static void fileDrop(String filePath) {
+        // 获取输入的内容
+        String tableName = tableNameField.getText();
+        String tableItem = tableItemField.getText();
+        String tableItemComments = tableItemCommentsField.getText();
+        String sheetName = sheetField.getText();
+        String programName = programNameField.getText();
+
+        // 输入校验
+        if (sheetName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (tableName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入テーブル名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (tableItem.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入テーブル項目ID", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (tableItemComments.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入テーブル項目名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else if (programName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "请输入程序名", "警告", JOptionPane.WARNING_MESSAGE);
+        } else {
+            // 开始读取
+            readExcelAndShowOutput(filePath);
+            String programId = convertToUpperCase(programName);
+            String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "Dto.java"};
+            String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
+            generateAndSaveFiles(fileNames, generatedContents, programId);
         }
     }
 
