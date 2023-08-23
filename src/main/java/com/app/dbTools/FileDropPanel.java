@@ -17,8 +17,8 @@ import java.io.IOException;
  */
 public class FileDropPanel extends JPanel {
     private ActionListener fileDropListener;
-
     private String droppedFilePath;
+    private boolean fileNo;
 
     public FileDropPanel() {
         setPreferredSize(new Dimension(300, 200));
@@ -33,10 +33,17 @@ public class FileDropPanel extends JPanel {
                         event.acceptDrop(DnDConstants.ACTION_COPY);
                         java.util.List<File> fileList = (java.util.List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
 
+                        if(fileList.size() > 1){
+                            fileNo = false;
+                            System.out.println("3!");
+                        } else if (fileList.size() == 1) {
+                            fileNo = true;
+                        }
+
                         // 处理拖拽的文件，例如读取Excel文件内容
                         for (File file : fileList) {
                             if (file.getName().endsWith(".xls") || file.getName().endsWith(".xlsx")) {
-                                // 在这里处理读取Excel文件的逻辑
+                                // 获取拖拽文件的绝对路径
                                 System.out.println("Reading Excel file: " + file.getAbsolutePath());
 
                                 // 设置文件路径
@@ -45,6 +52,9 @@ public class FileDropPanel extends JPanel {
                                 // 触发文件拖放事件监听器
                                 if (fileDropListener != null) {
                                     fileDropListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "fileDropped"));
+                                    if(!fileNo){
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -75,6 +85,13 @@ public class FileDropPanel extends JPanel {
      */
     public String getDroppedFilePath() {
         return droppedFilePath;
+    }
+
+    /**
+     * 文件数量
+     */
+    public boolean getFileSize() {
+        return fileNo;
     }
 
     /**

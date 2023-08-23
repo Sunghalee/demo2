@@ -33,6 +33,8 @@ public class MybatisConvert extends JFrame {
 
     // 默认的文件选择路径
     private static String lastSelectedFilePath = "D:\\";
+    private static final int stage1 = 1;
+    private static final int stage2 = 2;
 
     public static void action() {
         frame = new JFrame("mapperConvert author Sunghalee");
@@ -97,7 +99,11 @@ public class MybatisConvert extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // 处理文件拖放读取
-                System.out.println("1!");
+                if(!dropPanel.getFileSize()){
+                    System.out.println("2!");
+                    JOptionPane.showMessageDialog(frame, "一次只能拖拽一个文件", "警告", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
                 // 获取文件路径
                 String filePath = dropPanel.getDroppedFilePath();
@@ -197,7 +203,7 @@ public class MybatisConvert extends JFrame {
 
                 String programId = convertToUpperCase(programName);
                 String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
-                String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
+                String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
                 generateAndSaveFiles(fileNames, generatedContents, programId);
             }
         }
@@ -229,10 +235,10 @@ public class MybatisConvert extends JFrame {
         } else {
             // 开始读取
             readExcelAndShowOutput(filePath);
+
             String programId = convertToUpperCase(programName);
-            String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "Dto.java"};
-            String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), outputTextArea.getText()};
-            JOptionPane.showMessageDialog(frame, "读取完成", "提示", JOptionPane.INFORMATION_MESSAGE);
+            String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
+            String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
             generateAndSaveFiles(fileNames, generatedContents, programId);
         }
     }
@@ -341,6 +347,9 @@ public class MybatisConvert extends JFrame {
 
         StringBuilder outputText = new StringBuilder();
 
+        StringBuilder searchBuilder = new StringBuilder();
+        getSearchDtoInfo(searchBuilder,programName,1);
+
         try {
             FileInputStream fileInputStream = new FileInputStream(excelFilePath);
             Workbook workbook = WorkbookFactory.create(fileInputStream);
@@ -424,6 +433,14 @@ public class MybatisConvert extends JFrame {
 //                                outType = resultSet.getString("DATA_TYPE");
 //                            }
 //                            outputText.append("<result column=\""+ conTableItem +"\" jdbcType=\""+ outType +"\" property=\""+ extractAndFormatFieldName(conTableItem)+"\" /><!--"+ conTableItemComments +"-->");
+
+                            //searchDto的处理
+                            searchBuilder.append("/**\n");
+                            searchBuilder.append(" * ").append(conTableItemComments).append("\n");
+                            searchBuilder.append(" */\n");
+                            searchBuilder.append("private String ").append(extractAndFormatFieldName(conTableItem)).append(";\n");
+                            searchBuilder.append("\n");
+
                         }
                     }
                 }
@@ -440,8 +457,10 @@ public class MybatisConvert extends JFrame {
                 mapperBuilder = new StringBuilder();
                 getMapperInfo(programName);
 
-                //.xml对象
+                //searchDto对象
                 searchDtoBuilder = new StringBuilder();
+                getSearchDtoInfo(searchBuilder,programName,2);
+
                 assert resultSet != null;
                 resultSet.close();
                 statement.close();
@@ -469,8 +488,6 @@ public class MybatisConvert extends JFrame {
             JOptionPane.showMessageDialog(frame, e, "警告", JOptionPane.WARNING_MESSAGE);
             throw new RuntimeException(e);
         }
-        outputTextArea.setText(outputText.toString());
-        outputTextArea.setCaretPosition(0);
     }
 
 
@@ -603,6 +620,51 @@ public class MybatisConvert extends JFrame {
         mapper.append("}");
 
         mapperBuilder = mapper;
+    }
+
+    /**
+     * .
+     * searchDto Java对象转换
+     */
+    private static void getSearchDtoInfo(StringBuilder searchBuilder,String programName,int stageFlg){
+
+        if(stage1 == stageFlg){
+            searchBuilder.append("package nis.spro.seisan.common.dto;");
+            searchBuilder.append("\n");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("import java.io.Serializable;");
+            searchBuilder.append("\n");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("import lombok.Getter;");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("import lombok.Setter;");
+            searchBuilder.append("\n");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("/**");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append(" * Implementation of ").append(convertToUpperCase(programName)).append("Search DTO class.");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append(" *");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append(" * @author SoftRoad");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append(" */");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("@Getter");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("@Setter");
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("public class ").append(convertToUpperCase(programName)).append("SearchDto implements Serializable{");
+            searchBuilder.append("\n");
+            searchBuilder.append(System.lineSeparator());
+        }
+
+        if(stage2 == stageFlg){
+            searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("}");
+            searchDtoBuilder = searchBuilder;
+        }
+
     }
 
 }
