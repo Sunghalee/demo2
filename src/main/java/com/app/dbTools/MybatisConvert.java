@@ -3,6 +3,8 @@ package com.app.dbTools;
 import com.MainFrame;
 import com.jtattoo.plaf.acryl.AcrylLookAndFeel;
 import com.service.DbConnectionService;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -35,12 +37,16 @@ public class MybatisConvert extends JFrame {
     private static String lastSelectedFilePath = "D:\\";
     private static final int stage1 = 1;
     private static final int stage2 = 2;
+    private static HikariDataSource dataSource = null;
 
     public static void action() {
         frame = new JFrame("mapperConvert author Sunghalee");
 
         //设定图标样式
         createIcon();
+
+        //创建数据库连接池
+        createDbConPool();
 
         // 设置Nimbus Look and Feel
         try {
@@ -49,8 +55,7 @@ public class MybatisConvert extends JFrame {
             JFrame.setDefaultLookAndFeelDecorated(true);
             UIManager.setLookAndFeel(new AcrylLookAndFeel());
         } catch (Exception e) {
-            String err = e.toString();
-            System.out.println(err);
+            e.printStackTrace();
         }
 
         //关闭只关闭当前窗口，不结束程序运行
@@ -99,7 +104,7 @@ public class MybatisConvert extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // 处理文件拖放读取
-                if(!dropPanel.getFileSize()){
+                if (!dropPanel.getFileSize()) {
                     System.out.println("2!");
                     JOptionPane.showMessageDialog(frame, "一次只能拖拽一个文件", "警告", JOptionPane.WARNING_MESSAGE);
                     return;
@@ -170,6 +175,26 @@ public class MybatisConvert extends JFrame {
     }
 
     /**
+     * 获取连接池实例
+     */
+    private static synchronized void createDbConPool() {
+        if (dataSource == null) {
+            DbConfig dbConfig = null;
+            dbConfig = new DbConfig();
+
+            // 创建连接池配置
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(dbConfig.getJdbcUrl());
+            config.setUsername(dbConfig.getUsername());
+            config.setPassword(dbConfig.getPassword());
+            config.setMaximumPoolSize(dbConfig.getMaximumPoolSize());
+
+            // 创建连接池实例
+            dataSource = new HikariDataSource(config);
+        }
+    }
+
+    /**
      * 打开文件选择对话框并读取
      */
     private static void openFileChooser() {
@@ -205,6 +230,7 @@ public class MybatisConvert extends JFrame {
                 String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
                 String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
                 generateAndSaveFiles(fileNames, generatedContents, programId);
+                dataSource.close();
             }
         }
     }
@@ -240,6 +266,7 @@ public class MybatisConvert extends JFrame {
             String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
             String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
             generateAndSaveFiles(fileNames, generatedContents, programId);
+            dataSource.close();
         }
     }
 
@@ -291,6 +318,7 @@ public class MybatisConvert extends JFrame {
                     writer.write(generatedContents[i]);
                     writer.flush();
                 } catch (IOException ex) {
+                    ex.printStackTrace();
                     JOptionPane.showMessageDialog(frame, "保存文件失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -348,9 +376,9 @@ public class MybatisConvert extends JFrame {
         StringBuilder outputText = new StringBuilder();
 
         StringBuilder searchBuilder = new StringBuilder();
-        getSearchDtoInfo(searchBuilder,programName,1);
+        getSearchDtoInfo(searchBuilder, programName, 1);
 
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             FileInputStream fileInputStream = new FileInputStream(excelFilePath);
             Workbook workbook = WorkbookFactory.create(fileInputStream);
             Sheet sheet = workbook.getSheet(sheetName);
@@ -369,9 +397,6 @@ public class MybatisConvert extends JFrame {
                         .append("SearchMap\" type=\"nis.spro.seisan.common.dto.")
                         .append(convertToUpperCase(programName)).append("SearchDto\">\n");
 
-                //创建DB连接
-                Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@10.4.2.179:1521/orcl", "ORATDIKO01", "password");
-                Statement statement = connection.createStatement();
                 ResultSet resultSet = null;
 
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
@@ -423,6 +448,7 @@ public class MybatisConvert extends JFrame {
                                 }
                             } catch (SQLException e) {
                                 // 处理异常
+                                e.printStackTrace();
                                 JOptionPane.showMessageDialog(frame, e, "警告", JOptionPane.WARNING_MESSAGE);
                             }
 
@@ -459,12 +485,7 @@ public class MybatisConvert extends JFrame {
 
                 //searchDto对象
                 searchDtoBuilder = new StringBuilder();
-                getSearchDtoInfo(searchBuilder,programName,2);
-
-                assert resultSet != null;
-                resultSet.close();
-                statement.close();
-                connection.close();
+                getSearchDtoInfo(searchBuilder, programName, 2);
 
 //                // 读取完 Excel 内容后，执行数据库查询
 //                String dbOutput = executeDbQuery();
@@ -481,12 +502,13 @@ public class MybatisConvert extends JFrame {
             workbook.close();
             fileInputStream.close();
         } catch (IOException e) {
-            String err = e.toString();
-            System.out.println(err);
+            e.printStackTrace();
             JOptionPane.showMessageDialog(frame, e, "警告", JOptionPane.WARNING_MESSAGE);
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(frame, e, "警告", JOptionPane.WARNING_MESSAGE);
             throw new RuntimeException(e);
+        } finally {
+            dataSource.close();
         }
     }
 
@@ -626,9 +648,9 @@ public class MybatisConvert extends JFrame {
      * .
      * searchDto Java对象转换
      */
-    private static void getSearchDtoInfo(StringBuilder searchBuilder,String programName,int stageFlg){
+    private static void getSearchDtoInfo(StringBuilder searchBuilder, String programName, int stageFlg) {
 
-        if(stage1 == stageFlg){
+        if (stage1 == stageFlg) {
             searchBuilder.append("package nis.spro.seisan.common.dto;");
             searchBuilder.append("\n");
             searchBuilder.append(System.lineSeparator());
@@ -657,9 +679,14 @@ public class MybatisConvert extends JFrame {
             searchBuilder.append("public class ").append(convertToUpperCase(programName)).append("SearchDto implements Serializable{");
             searchBuilder.append("\n");
             searchBuilder.append(System.lineSeparator());
+            searchBuilder.append("/**\n");
+            searchBuilder.append(" * ").append("serialVersionUID").append("\n");
+            searchBuilder.append(" */\n");
+            searchBuilder.append("private static final long serialVersionUID = 1L;").append("\n");
+            searchBuilder.append("\n");
         }
 
-        if(stage2 == stageFlg){
+        if (stage2 == stageFlg) {
             searchBuilder.append(System.lineSeparator());
             searchBuilder.append("}");
             searchDtoBuilder = searchBuilder;
