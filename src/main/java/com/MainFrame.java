@@ -12,6 +12,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import static com.app.dbTools.DbEnum.shutdownDataSource;
+
 /**
  * 转换工具
  *
@@ -23,7 +25,7 @@ public class MainFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-            mainFrame = new JFrame("Conversion Tool V7.0.0 By Sunghalee");
+            mainFrame = new JFrame("Conversion Tool V7.0.1 By Sunghalee");
 
             //设定图标样式
             createIcon();
@@ -70,6 +72,7 @@ public class MainFrame {
 
                     // 完全关闭程序
                     if (option == JOptionPane.YES_OPTION) {
+                        shutdownDataSource();
                         System.exit(0);
                     }
                 }

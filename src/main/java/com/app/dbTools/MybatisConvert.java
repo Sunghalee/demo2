@@ -12,12 +12,18 @@ import org.apache.poi.ss.usermodel.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import static com.app.dbTools.DbEnum.dataSource;
+import static com.app.dbTools.DbEnum.shutdownDataSource;
 
 /**
  * db相关文件生成
@@ -42,7 +48,6 @@ public class MybatisConvert extends JFrame {
     private static final int stage2 = 2;
     private static final int stage3 = 3;
     private static boolean multipleSearchMode = false;
-    private static HikariDataSource dataSource = null;
 
     public static void action() {
         frame = new JFrame("mapperConvert author Sunghalee");
@@ -175,7 +180,8 @@ public class MybatisConvert extends JFrame {
 
         frame.setVisible(true);
 
-        JOptionPane.showMessageDialog(frame, "请将仕样书中DB的汉字名替换成物理名称，存在多个检索请勾选checkBox", "提示", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(frame, "请将仕样书中DB的汉字名替换成物理名称，存在多个检索请勾选checkBox，" +
+                "并在仕样书不同检索对象的交界处设置Multiple Search的标识", "提示", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -388,7 +394,7 @@ public class MybatisConvert extends JFrame {
 
         StringBuilder outputText = new StringBuilder();
         StringBuilder xmlBuilder = new StringBuilder();
-        getXmlInfo(xmlBuilder, programName,1);
+        getXmlInfo(xmlBuilder, programName, 1);
 
         StringBuilder searchBuilder = new StringBuilder();
         getSearchDtoInfo(searchBuilder, programName, 1);
@@ -432,7 +438,7 @@ public class MybatisConvert extends JFrame {
 
                             //多重检索模式标识
                             if ("Multiple Search".equals(conTable)) {
-                                getXmlInfo(xmlBuilder, programName,2);
+                                getXmlInfo(xmlBuilder, programName, 2);
                                 continue;
                             }
 
@@ -503,7 +509,7 @@ public class MybatisConvert extends JFrame {
                 outputText.append("</resultMap>\n");
                 outputText.append("</mapper>\n");
 
-                getXmlInfo(xmlBuilder, programName,3);
+                getXmlInfo(xmlBuilder, programName, 3);
 
                 outputText.append("\n\n");
 
@@ -604,15 +610,6 @@ public class MybatisConvert extends JFrame {
     }
 
     /**
-     * 关闭连接池
-     */
-    private static void shutdownDataSource() {
-        if (dataSource != null) {
-            dataSource.close();
-        }
-    }
-
-    /**
      * .
      * 首字母大写转换
      */
@@ -657,7 +654,7 @@ public class MybatisConvert extends JFrame {
                     .append(convertToUpperCase(programName)).append("SearchDto\">\n");
         }
 
-        if(stage2 == currentStage && multipleSearchMode){
+        if (stage2 == currentStage && multipleSearchMode) {
             xmlBuilder.append("</resultMap>\n");
             xmlBuilder.append("<resultMap id=\"").append(convertToLowerCase(programName))
                     .append("SearchMap2\" type=\"nis.spro.seisan.common.dto.")
