@@ -143,6 +143,7 @@ public class MybatisConvert extends JFrame {
 
                 // 完全关闭程序
                 if (option == JOptionPane.YES_OPTION) {
+                    shutdownDataSource();
                     System.exit(0);
                 }
             }
@@ -173,6 +174,8 @@ public class MybatisConvert extends JFrame {
 //        programNameField.addActionListener(e -> openFileChooser());
 
         frame.setVisible(true);
+
+        JOptionPane.showMessageDialog(frame, "请将仕样书中DB的汉字名替换成物理名称，存在多个检索请勾选checkBox", "提示", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -242,7 +245,6 @@ public class MybatisConvert extends JFrame {
                 String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
                 String[] generatedContents = {xmlMapperBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
                 generateAndSaveFiles(fileNames, generatedContents, programId);
-                dataSource.close();
             }
         }
     }
@@ -278,7 +280,6 @@ public class MybatisConvert extends JFrame {
             String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
             String[] generatedContents = {xmlMapperBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
             generateAndSaveFiles(fileNames, generatedContents, programId);
-            dataSource.close();
         }
     }
 
@@ -538,8 +539,6 @@ public class MybatisConvert extends JFrame {
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(frame, e, "警告", JOptionPane.WARNING_MESSAGE);
             throw new RuntimeException(e);
-        } finally {
-            dataSource.close();
         }
     }
 
@@ -596,13 +595,21 @@ public class MybatisConvert extends JFrame {
 
 
     /**
-     * .
      * DB查询
      */
     private static String executeDbQuery() throws SQLException, ClassNotFoundException {
         StringBuilder dbOutput = new StringBuilder();
         DbConnectionService.nsysDdConnection(dbOutput);
         return dbOutput.toString();
+    }
+
+    /**
+     * 关闭连接池
+     */
+    private static void shutdownDataSource() {
+        if (dataSource != null) {
+            dataSource.close();
+        }
     }
 
     /**

@@ -23,7 +23,7 @@ public class MainFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-            mainFrame = new JFrame("Conversion Tool V6.0.5 By Sunghalee");
+            mainFrame = new JFrame("Conversion Tool V7.0.0 By Sunghalee");
 
             //设定图标样式
             createIcon();
