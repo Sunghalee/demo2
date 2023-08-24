@@ -180,8 +180,8 @@ public class MybatisConvert extends JFrame {
 
         frame.setVisible(true);
 
-        JOptionPane.showMessageDialog(frame, "请将仕样书中DB的汉字名替换成物理名称，存在多个检索请勾选checkBox，" +
-                "并在仕样书不同检索对象的交界处设置Multiple Search的标识", "提示", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(frame, "请将仕样书中DB的汉字名替换成物理名\n存在多个检索 请勾选checkBox," +
+                "并在仕样书中设置Multiple Search的标识\n如有其它疑问，请联系开发者", "提示", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
