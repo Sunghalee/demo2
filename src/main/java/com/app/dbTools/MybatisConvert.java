@@ -14,7 +14,10 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * db相关文件生成
@@ -29,7 +32,7 @@ public class MybatisConvert extends JFrame {
     private static JTextField sheetField;
     private static JTextField programNameField;
     private static JFrame frame;
-    private static StringBuilder xmlBuilder;
+    private static StringBuilder xmlMapperBuilder;
     private static StringBuilder mapperBuilder;
     private static StringBuilder searchDtoBuilder;
 
@@ -37,6 +40,8 @@ public class MybatisConvert extends JFrame {
     private static String lastSelectedFilePath = "D:\\";
     private static final int stage1 = 1;
     private static final int stage2 = 2;
+    private static final int stage3 = 3;
+    private static boolean multipleSearchMode = false;
     private static HikariDataSource dataSource = null;
 
     public static void action() {
@@ -70,7 +75,7 @@ public class MybatisConvert extends JFrame {
         JScrollPane scrollPane = new JScrollPane(outputTextArea);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel inputPanel = new JPanel(new GridLayout(5, 1));
+        JPanel inputPanel = new JPanel(new GridLayout(6, 1));
 
         //实例化4个输入窗口
         sheetField = new JTextField();
@@ -99,21 +104,30 @@ public class MybatisConvert extends JFrame {
         FileDropPanel dropPanel = new FileDropPanel();
         frame.add(dropPanel, BorderLayout.CENTER);
 
-        // 添加文件拖放事件监听器
-        dropPanel.addFileDropListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // 处理文件拖放读取
-                if (!dropPanel.getFileSize()) {
-                    System.out.println("2!");
-                    JOptionPane.showMessageDialog(frame, "一次只能拖拽一个文件", "警告", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
+        JCheckBox myCheckBox = new JCheckBox("是否存在多个检索mode");
+        // 将复选框添加到输入面板
+        dropPanel.add(myCheckBox);
 
-                // 获取文件路径
-                String filePath = dropPanel.getDroppedFilePath();
-                fileDrop(filePath);
+        //是否勾选checkbox
+        myCheckBox.addItemListener(e -> {
+            if (myCheckBox.isSelected()) {
+                // 用户选中了复选框
+                multipleSearchMode = true;
             }
+        });
+
+        // 添加文件拖放事件监听器
+        dropPanel.addFileDropListener(e -> {
+            // 处理文件拖放读取
+            if (!dropPanel.getFileSize()) {
+                System.out.println("2!");
+                JOptionPane.showMessageDialog(frame, "一次只能拖拽一个文件", "警告", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 获取文件路径
+            String filePath = dropPanel.getDroppedFilePath();
+            fileDrop(filePath);
         });
 
         // 让窗口在屏幕中央显示
@@ -168,9 +182,7 @@ public class MybatisConvert extends JFrame {
         JButton startButton = new JButton("选择文件");
 
         //创建读取按钮的监听事件
-        startButton.addActionListener(e -> {
-            openFileChooser();
-        });
+        startButton.addActionListener(e -> openFileChooser());
         return startButton;
     }
 
@@ -228,7 +240,7 @@ public class MybatisConvert extends JFrame {
 
                 String programId = convertToUpperCase(programName);
                 String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
-                String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
+                String[] generatedContents = {xmlMapperBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
                 generateAndSaveFiles(fileNames, generatedContents, programId);
                 dataSource.close();
             }
@@ -264,7 +276,7 @@ public class MybatisConvert extends JFrame {
 
             String programId = convertToUpperCase(programName);
             String[] fileNames = {programId + "Mapper.xml", programId + "Mapper.java", programId + "SearchDto.java"};
-            String[] generatedContents = {xmlBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
+            String[] generatedContents = {xmlMapperBuilder.toString(), mapperBuilder.toString(), searchDtoBuilder.toString()};
             generateAndSaveFiles(fileNames, generatedContents, programId);
             dataSource.close();
         }
@@ -374,6 +386,8 @@ public class MybatisConvert extends JFrame {
         String programName = programNameField.getText();
 
         StringBuilder outputText = new StringBuilder();
+        StringBuilder xmlBuilder = new StringBuilder();
+        getXmlInfo(xmlBuilder, programName,1);
 
         StringBuilder searchBuilder = new StringBuilder();
         getSearchDtoInfo(searchBuilder, programName, 1);
@@ -397,7 +411,7 @@ public class MybatisConvert extends JFrame {
                         .append("SearchMap\" type=\"nis.spro.seisan.common.dto.")
                         .append(convertToUpperCase(programName)).append("SearchDto\">\n");
 
-                ResultSet resultSet = null;
+                ResultSet resultSet;
 
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
@@ -414,6 +428,12 @@ public class MybatisConvert extends JFrame {
                             String conTable = tableNameCon.toString();
                             String conTableItem = tableItemCon.toString();
                             String conTableItemComments = tableItemCommentsCon.toString();
+
+                            //多重检索模式标识
+                            if ("Multiple Search".equals(conTable)) {
+                                getXmlInfo(xmlBuilder, programName,2);
+                                continue;
+                            }
 
                             //虽然不知道为啥 这么写在程序中报错 但是拼出来的sql在db是好用的
 //                            String sql = "SELECT COLUMN_NAME, DATA_TYPE " +
@@ -435,9 +455,18 @@ public class MybatisConvert extends JFrame {
 
                                 // 处理查询结果
                                 while (resultSet.next()) {
-                                    String columnName = resultSet.getString("COLUMN_NAME");
+
                                     String dataType = resultSet.getString("DATA_TYPE");
                                     outputText.append("<result column=\"").append(conTableItem)
+                                            .append("\" jdbcType=\"")
+                                            .append(dataType)
+                                            .append("\" property=\"")
+                                            .append(extractAndFormatFieldName(conTableItem))
+                                            .append("\" /><!--")
+                                            .append(conTableItemComments)
+                                            .append("-->\n");
+
+                                    xmlBuilder.append("<result column=\"").append(conTableItem)
                                             .append("\" jdbcType=\"")
                                             .append(dataType)
                                             .append("\" property=\"")
@@ -473,11 +502,13 @@ public class MybatisConvert extends JFrame {
                 outputText.append("</resultMap>\n");
                 outputText.append("</mapper>\n");
 
+                getXmlInfo(xmlBuilder, programName,3);
+
                 outputText.append("\n\n");
 
                 //.xml对象
-                xmlBuilder = new StringBuilder();
-                xmlBuilder.append(outputText);
+                xmlMapperBuilder = new StringBuilder();
+                xmlMapperBuilder.append(xmlBuilder);
 
                 //mapper对象
                 mapperBuilder = new StringBuilder();
@@ -605,7 +636,45 @@ public class MybatisConvert extends JFrame {
     }
 
     /**
-     * .
+     * xml对象转换
+     */
+    private static void getXmlInfo(StringBuilder xmlBuilder, String programName, int currentStage) {
+
+        if (stage1 == currentStage) {
+            xmlBuilder.append("<?xml version=\"1.0\" encoding=\"Windows-31J\"?>\n");
+            xmlBuilder.append("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n");
+            xmlBuilder.append("<mapper namespace=\"nis.spro.seisan.common.dao.mapper.").append(convertToUpperCase(programName)).append("Mapper\">\n");
+            xmlBuilder.append("<!--検索-->\n");
+            xmlBuilder.append("<resultMap id=\"").append(convertToLowerCase(programName))
+                    .append("SearchMap\" type=\"nis.spro.seisan.common.dto.")
+                    .append(convertToUpperCase(programName)).append("SearchDto\">\n");
+        }
+
+        if(stage2 == currentStage && multipleSearchMode){
+            xmlBuilder.append("</resultMap>\n");
+            xmlBuilder.append("<resultMap id=\"").append(convertToLowerCase(programName))
+                    .append("SearchMap2\" type=\"nis.spro.seisan.common.dto.")
+                    .append(convertToUpperCase(programName)).append("SearchDto\">\n");
+        }
+
+        //单一检索最后阶段
+//        if (stage3 == currentStage && !multipleSearchMode) {
+//            xmlBuilder.append("</resultMap>\n");
+//            xmlBuilder.append("</mapper>\n");
+//        }
+//        //多个检索
+//        else if(stage3 == currentStage && multipleSearchMode){
+//
+//        }
+
+        if (stage3 == currentStage) {
+            xmlBuilder.append("</resultMap>\n");
+            xmlBuilder.append("</mapper>\n");
+        }
+
+    }
+
+    /**
      * mapper Java对象转换
      */
     private static void getMapperInfo(String programName) {
@@ -645,12 +714,11 @@ public class MybatisConvert extends JFrame {
     }
 
     /**
-     * .
      * searchDto Java对象转换
      */
-    private static void getSearchDtoInfo(StringBuilder searchBuilder, String programName, int stageFlg) {
+    private static void getSearchDtoInfo(StringBuilder searchBuilder, String programName, int currentStage) {
 
-        if (stage1 == stageFlg) {
+        if (stage1 == currentStage) {
             searchBuilder.append("package nis.spro.seisan.common.dto;");
             searchBuilder.append("\n");
             searchBuilder.append(System.lineSeparator());
@@ -686,7 +754,7 @@ public class MybatisConvert extends JFrame {
             searchBuilder.append("\n");
         }
 
-        if (stage2 == stageFlg) {
+        if (stage2 == currentStage) {
             searchBuilder.append(System.lineSeparator());
             searchBuilder.append("}");
             searchDtoBuilder = searchBuilder;
