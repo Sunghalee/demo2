@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.*;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -21,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import static com.app.dbTools.DbEnum.dataSource;
 import static com.app.dbTools.DbEnum.shutdownDataSource;
@@ -41,6 +43,8 @@ public class MybatisConvert extends JFrame {
     private static StringBuilder xmlMapperBuilder;
     private static StringBuilder mapperBuilder;
     private static StringBuilder searchDtoBuilder;
+
+    private static JComboBox<String> sheetComboBox;
 
     // 默认的文件选择路径
     private static String lastSelectedFilePath = "D:\\";
@@ -89,8 +93,10 @@ public class MybatisConvert extends JFrame {
         tableItemCommentsField = new JTextField();
         programNameField = new JTextField();
 
+        sheetComboBox = new JComboBox<>(new String[]{"画面項目", "処理内容"});
+
         inputPanel.add(new JLabel("SHEET名："));
-        inputPanel.add(sheetField);
+        inputPanel.add(sheetComboBox);
         inputPanel.add(new JLabel("テーブル名："));
         inputPanel.add(tableNameField);
         inputPanel.add(new JLabel("テーブル項目ID："));
@@ -223,13 +229,11 @@ public class MybatisConvert extends JFrame {
         String tableName = tableNameField.getText();
         String tableItem = tableItemField.getText();
         String tableItemComments = tableItemCommentsField.getText();
-        String sheetName = sheetField.getText();
+        String sheetName = Objects.requireNonNull(sheetComboBox.getSelectedItem()).toString();
         String programName = programNameField.getText();
 
         // 输入校验
-        if (sheetName.isEmpty()) {
-            JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
-        } else if (tableName.isEmpty()) {
+        if (tableName.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "请输入テーブル名", "警告", JOptionPane.WARNING_MESSAGE);
         } else if (tableItem.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "请输入テーブル項目ID", "警告", JOptionPane.WARNING_MESSAGE);
@@ -264,13 +268,11 @@ public class MybatisConvert extends JFrame {
         String tableName = tableNameField.getText();
         String tableItem = tableItemField.getText();
         String tableItemComments = tableItemCommentsField.getText();
-        String sheetName = sheetField.getText();
+        String sheetName = Objects.requireNonNull(sheetComboBox.getSelectedItem()).toString();
         String programName = programNameField.getText();
 
         // 输入校验
-        if (sheetName.isEmpty()) {
-            JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
-        } else if (tableName.isEmpty()) {
+        if (tableName.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "请输入テーブル名", "警告", JOptionPane.WARNING_MESSAGE);
         } else if (tableItem.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "请输入テーブル項目ID", "警告", JOptionPane.WARNING_MESSAGE);
@@ -388,7 +390,7 @@ public class MybatisConvert extends JFrame {
         String tableItemComments = tableItemCommentsField.getText();
 
         //获取输入的sheet名称
-        String sheetName = sheetField.getText();
+        String sheetName = Objects.requireNonNull(sheetComboBox.getSelectedItem()).toString();
 
         String programName = programNameField.getText();
 

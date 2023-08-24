@@ -39,25 +39,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 文件读取 输入相关依赖 -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>5.0.0</version> <!-- 根据你需要的版本进行调整 -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>5.1.0</version> <!-- 根据你需要的版本进行调整 -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml-full</artifactId>
-            <version>5.1.0</version>
-        </dependency>
-
         <!-- lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -97,6 +78,25 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>4.0.3</version>
+        </dependency>
+
+        <!-- 文件读取 输入相关依赖 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.0.0</version> <!-- 根据你需要的版本进行调整 -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.1.0</version> <!-- 根据你需要的版本进行调整 -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml-full</artifactId>
+            <version>5.1.0</version>
         </dependency>
 
         <!-- sqlserver jdbc -->
