@@ -87,19 +87,19 @@ public class SrColumnModelReader extends JFrame {
         frame.setVisible(true);
 
         // 添加窗口关闭监听器
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                int option = JOptionPane.showConfirmDialog(frame,
-                        "你要关闭整个程序吗", "Confirmation",
-                        JOptionPane.YES_NO_OPTION);
-
-                // 完全关闭程序
-                if (option == JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
-            }
-        });
+//        frame.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent e) {
+//                int option = JOptionPane.showConfirmDialog(frame,
+//                        "你要关闭整个程序吗", "Confirmation",
+//                        JOptionPane.YES_NO_OPTION);
+//
+//                // 完全关闭程序
+//                if (option == JOptionPane.YES_OPTION) {
+//                    System.exit(0);
+//                }
+//            }
+//        });
     }
 
     private static JButton getjButton() {
@@ -113,15 +113,15 @@ public class SrColumnModelReader extends JFrame {
             String sheetName = sheetField.getText();
 
             //输入校验
-            if (sheetName.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (columnItem.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "请输入項目名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (columnType.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "请输入タイプ", "警告", JOptionPane.WARNING_MESSAGE);
-            } else if (columnModelName.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "请输入属性名", "警告", JOptionPane.WARNING_MESSAGE);
-            } else {
+//            if (sheetName.isEmpty()) {
+//                JOptionPane.showMessageDialog(frame, "请输入Sheet名", "警告", JOptionPane.WARNING_MESSAGE);
+//            } else if (columnItem.isEmpty()) {
+//                JOptionPane.showMessageDialog(frame, "请输入項目名", "警告", JOptionPane.WARNING_MESSAGE);
+//            } else if (columnType.isEmpty()) {
+//                JOptionPane.showMessageDialog(frame, "请输入タイプ", "警告", JOptionPane.WARNING_MESSAGE);
+//            } else if (columnModelName.isEmpty()) {
+//                JOptionPane.showMessageDialog(frame, "请输入属性名", "警告", JOptionPane.WARNING_MESSAGE);
+//            } else {
                 JFileChooser fileChooser = new JFileChooser(lastSelectedFilePath);
                 int result = fileChooser.showOpenDialog(null);
                 if (result == JFileChooser.APPROVE_OPTION) {
@@ -130,7 +130,7 @@ public class SrColumnModelReader extends JFrame {
                     lastSelectedFilePath = selectedFile.getParent();
                     //开始读取
                     readExcelAndShowOutput(selectedFile.getAbsolutePath());
-                }
+//                }
             }
         });
         return startButton;

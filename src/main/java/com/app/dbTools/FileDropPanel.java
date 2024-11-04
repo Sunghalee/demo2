@@ -98,12 +98,12 @@ public class FileDropPanel extends JPanel {
      * 窗口UI
      */
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.setColor(Color.lightGray);
-        g.fillRect(0, 0, getWidth(), getHeight());
-        g.setColor(Color.BLACK);
-        g.drawString("将Excel文件拖放到此处", 180, 120);
-        g.drawString("或点击选择文件", 200, 140);
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        graphics.setColor(Color.lightGray);
+        graphics.fillRect(0, 0, getWidth(), getHeight());
+        graphics.setColor(Color.BLACK);
+        graphics.drawString("将Excel文件拖放到此处", 180, 120);
+        graphics.drawString("或点击选择文件", 200, 140);
     }
 }

@@ -31,7 +31,7 @@ public class CcFlowModelReader extends JFrame {
     private static String lastSelectedFilePath = "D:\\";
 
     public static void action() {
-        frame = new JFrame("CC-FLOW author Sunghalee");
+        frame = new JFrame("金骋软件考勤转换 author Sunghalee");
 
         //设定图标样式
         createIcon();

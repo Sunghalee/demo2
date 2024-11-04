@@ -145,7 +145,7 @@ public class MybatisConvert extends JFrame {
         frame.setLocationRelativeTo(null);
 
         // 添加窗口关闭监听器
-        frame.addWindowListener(new WindowAdapter() {
+ /*       frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 int option = JOptionPane.showConfirmDialog(frame,
@@ -158,7 +158,7 @@ public class MybatisConvert extends JFrame {
                     System.exit(0);
                 }
             }
-        });
+        });*/
 
         // 在窗口上绑定回车键
         frame.getRootPane().setDefaultButton(startButton);
@@ -539,6 +539,18 @@ public class MybatisConvert extends JFrame {
                 workbook.close();
                 return; //
             }
+
+
+            //开始读取处理内容sheet
+            Sheet actionSheet = workbook.getSheet("処理内容");
+            if (sheet != null) {
+
+            }else{
+                JOptionPane.showMessageDialog(frame, "処理内容不存在", "警告", JOptionPane.WARNING_MESSAGE);
+                workbook.close();
+                return; //
+            }
+
             workbook.close();
             fileInputStream.close();
         } catch (IOException e) {
@@ -674,6 +686,8 @@ public class MybatisConvert extends JFrame {
 //        }
 
         if (stage3 == currentStage) {
+
+
             xmlBuilder.append("</resultMap>\n");
             xmlBuilder.append("</mapper>\n");
         }

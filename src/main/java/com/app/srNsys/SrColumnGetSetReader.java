@@ -94,19 +94,19 @@ public class SrColumnGetSetReader extends JFrame {
         frame.setVisible(true);
 
         // 添加窗口关闭监听器
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                int option = JOptionPane.showConfirmDialog(frame,
-                        "你要关闭整个程序吗", "Confirmation",
-                        JOptionPane.YES_NO_OPTION);
-
-                // 完全关闭程序
-                if (option == JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
-            }
-        });
+//        frame.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent e) {
+//                int option = JOptionPane.showConfirmDialog(frame,
+//                        "你要关闭整个程序吗", "Confirmation",
+//                        JOptionPane.YES_NO_OPTION);
+//
+//                // 完全关闭程序
+//                if (option == JOptionPane.YES_OPTION) {
+//                    System.exit(0);
+//                }
+//            }
+//        });
     }
 
     private static JButton getjButton() {

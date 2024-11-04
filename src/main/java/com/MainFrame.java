@@ -4,6 +4,7 @@ import com.app.ccFlow.CcFlowModelReader;
 import com.app.dbTools.MybatisConvert;
 import com.app.srNsys.SrColumnGetSetReader;
 import com.app.srNsys.SrColumnModelReader;
+import com.app.srNsys.CsvToExcelConverter;
 import com.jtattoo.plaf.acryl.AcrylLookAndFeel;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class MainFrame {
             addButton(mainFrame, "CC-FLOW", e -> openFrameWithButtons("CC-FLOW"));
             addButton(mainFrame, "B2", e -> openFrameWithButtons("B2"));
             addButton(mainFrame, "mybatis", e -> MybatisConvert.action());
-            addButton(mainFrame, "D4", e -> openFrameWithButtons("D4"));
+            addButton(mainFrame, "金骋软件出勤记录", e -> openFrameWithButtons("D4"));
             addButton(mainFrame, "E5", e -> openFrameWithButtons("E5"));
 
             //设定屏幕中央显示
@@ -123,24 +124,28 @@ public class MainFrame {
         frame.setSize(300, 300);
         frame.setLayout(new BorderLayout());
 
-        JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
-        JButton modelButton = new JButton("model生成");
-        JButton getSetButton = new JButton("getSet生成");
-        buttonsPanel.add(modelButton);
-        buttonsPanel.add(getSetButton);
-        frame.add(buttonsPanel, BorderLayout.CENTER);
+        //金骋软件出勤记录
+        if(projectName.equals("D4")){
+            openModelGenerationFrame(projectName);
+        }else {
+            JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
+            JButton modelButton = new JButton("model生成");
+            JButton getSetButton = new JButton("getSet生成");
+            buttonsPanel.add(modelButton);
+            buttonsPanel.add(getSetButton);
+            frame.add(buttonsPanel, BorderLayout.CENTER);
 
-        // 设置按钮点击事件
-        modelButton.addActionListener(e -> openModelGenerationFrame(projectName));
-        getSetButton.addActionListener(e -> openGetSetGenerationFrame(projectName));
+            // 设置按钮点击事件
+            modelButton.addActionListener(e -> openModelGenerationFrame(projectName));
+            getSetButton.addActionListener(e -> openGetSetGenerationFrame(projectName));
 
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        }
         //设置左上角图标
         String imagePath = "teamwork_4859784.png";
         Image imageIcon = Toolkit.getDefaultToolkit().getImage(MainFrame.class.getClassLoader().getResource(imagePath));
         frame.setIconImage(imageIcon);
-
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
     }
 
     /**
@@ -165,8 +170,9 @@ public class MainFrame {
                 MybatisConvert.action();
                 break;
             case "D4":
-                // 打开D4的model生成画面
-                JOptionPane.showMessageDialog(mainFrame, "暂未开发", "警告", JOptionPane.WARNING_MESSAGE);
+                // 打开金骋软件考勤记录生成工具
+                CsvToExcelConverter.createAndShowGUI();
+//                JOptionPane.showMessageDialog(mainFrame, "暂未开发", "警告", JOptionPane.WARNING_MESSAGE);
                 break;
             case "E5":
                 // 打开E5的model生成画面
