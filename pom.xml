@@ -125,7 +125,6 @@
             <artifactId>spire.xls</artifactId>
             <version>14.10.0</version>
         </dependency>
-
     </dependencies>
 
     <repositories>

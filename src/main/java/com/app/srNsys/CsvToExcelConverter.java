@@ -7,6 +7,11 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -180,7 +185,8 @@ public class CsvToExcelConverter extends JFrame {
                 nameRow.getCell(2).setCellValue(employeeName); // 员工姓名单元格
 
                 int rowIndex = 10; // 从第11行开始
-                int totalWorkHours = 0;
+//                int totalWorkHours = 0;
+                double totalWorkHours = 0.0;
 
                 for (GoldenSoftWork record : employeeRecords) {
                     // 为每条记录创建新行
@@ -204,12 +210,13 @@ public class CsvToExcelConverter extends JFrame {
                     newRow.getCell(1).setCellValue(record.getAttendanceDate()); // 天
                     newRow.getCell(2).setCellValue(record.getCheckInTime().isEmpty() ? "" : record.getCheckInTime()); // 签到时间
                     newRow.getCell(3).setCellValue(record.getCheckOutTime().isEmpty() ? "" : record.getCheckOutTime() ); // 签退时间
-                    newRow.getCell(4).setCellValue((!record.getAttendanceDuration().isEmpty() && record.getAttendanceDuration().equals("0H"))
+                    newRow.getCell(4).setCellValue((!record.getAttendanceDuration().isEmpty() && record.getAttendanceDuration().equals("0.0"))
                             ? "" :record.getAttendanceDuration()); // 正常出勤时长
 
                     // 累加总工作小时数
                     if (record.getAttendanceDuration() != null && !record.getAttendanceDuration().isEmpty()) {
-                        totalWorkHours += Integer.parseInt(record.getAttendanceDuration().replace("H", "").trim());
+//                        totalWorkHours += Integer.parseInt(record.getAttendanceDuration().replace("H", "").trim());
+                        totalWorkHours += Double.parseDouble(record.getAttendanceDuration().replace("H", "").trim());
                     }
 
                     rowIndex++;
@@ -243,7 +250,8 @@ public class CsvToExcelConverter extends JFrame {
 
                 // 填写总工作小时数
                 Cell totalValueCell = totalRow.createCell(4);
-                totalValueCell.setCellValue(totalWorkHours+"H");
+//                totalValueCell.setCellValue(totalWorkHours+"H");
+                totalValueCell.setCellValue(totalWorkHours);
 
                 // 设置合计值的样式并加粗
                 CellStyle totalValueStyle = workbook.createCellStyle();
@@ -263,7 +271,7 @@ public class CsvToExcelConverter extends JFrame {
 
 //            // 导出为 PDF 文件 TODO
 //            String pdfFilePath = excelFile + ".pdf"; // 设置 PDF 文件路径
-////            exportToPdf(excelFile + ".xlsx", pdfFilePath);
+//            exportToPdf(excelFile + ".xlsx", pdfFilePath);
 //
 //            com.spire.xls.Workbook workbook1 = new com.spire.xls.Workbook();
 //            workbook1.loadFromFile(excelFile+ ".xlsx");
@@ -277,6 +285,37 @@ public class CsvToExcelConverter extends JFrame {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(frame, "导出失败", "错误", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
+        }
+    }
+
+    public static void exportToPdf(String excelFilePath, String pdfFilePath) {
+        try {
+            printExcelToPDF(excelFilePath, pdfFilePath);
+            System.out.println("PDF 文件已成功生成：" + pdfFilePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void printExcelToPDF(String excelFilePath, String pdfFilePath) throws IOException {
+        // 使用完整路径来指定 Excel 可执行文件
+        String excelExecutablePath = "\"C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE\"";
+
+        // 构建打印命令
+        String command = excelExecutablePath + " /p \"" + excelFilePath + "\"";
+
+        // 使用 ProcessBuilder 来执行命令
+        ProcessBuilder builder = new ProcessBuilder("cmd", "/c", command);
+        builder.environment().put("OutputFile", pdfFilePath);  // 不一定适用于 Microsoft Print to PDF，但可以尝试
+
+        // 启动进程
+        Process process = builder.start();
+
+        // 等待进程完成
+        try {
+            process.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -458,8 +497,9 @@ public class CsvToExcelConverter extends JFrame {
                     if(values[9]!=null){
                         String attendanceDuration = values[9].trim().replace(" 分钟", "").trim();
                         int minutes = Integer.parseInt(attendanceDuration);
-                        int hours = minutes / 60; // 直接取整数部分，不进行四舍五入
-                        record.setAttendanceDuration(hours + "H");
+                        double hours = (double) minutes / 60;
+                        double roundedHours = Math.ceil(hours * 10) / 10.0;
+                        record.setAttendanceDuration(String.format("%.1f", roundedHours));
                     }else{
                         record.setAttendanceDuration(null);
                     }
@@ -472,10 +512,16 @@ public class CsvToExcelConverter extends JFrame {
 //                    float hours = minutes / 60.0f; // 不进行四舍五入
 //                    String formattedHours = String.format("%.1f", hours); // 保留一位小数
 //                    record.setAttendanceDuration(formattedHours + "H");
+
+//                    String attendanceDuration = values[9].trim().replace(" 分钟", "").trim();
+//                    int minutes = Integer.parseInt(attendanceDuration);
+//                    int hours = minutes / 60; // 直接取整数部分，不进行四舍五入
+//                    record.setAttendanceDuration(hours + "H");
                     String attendanceDuration = values[9].trim().replace(" 分钟", "").trim();
                     int minutes = Integer.parseInt(attendanceDuration);
-                    int hours = minutes / 60; // 直接取整数部分，不进行四舍五入
-                    record.setAttendanceDuration(hours + "H");
+                    double hours = (double) minutes / 60;
+                    double roundedHours = Math.ceil(hours * 10) / 10.0;
+                    record.setAttendanceDuration(String.format("%.1f", roundedHours));
                 }
                 records.add(record);
             }

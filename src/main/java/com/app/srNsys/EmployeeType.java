@@ -19,7 +19,7 @@ public enum EmployeeType {
     }
 
     public static boolean isValidEmployee(String employeeName) {
-        return ODC1.getNames().contains(employeeName) || ODC2.getNames().contains(employeeName);
+        return ODC1.getNames().contains(employeeName) || ODC2.getNames().contains(employeeName)|| OTHER.getNames().contains(employeeName);
     }
 }
 
