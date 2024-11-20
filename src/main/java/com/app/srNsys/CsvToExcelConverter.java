@@ -42,7 +42,7 @@ public class CsvToExcelConverter extends JFrame {
         frame = new JFrame("金骋软件出勤转换工具");
 
         //设定图标样式
-        createIcon();
+/*        createIcon();*/
 
         try {
             JFrame.setDefaultLookAndFeelDecorated(true);
@@ -151,7 +151,6 @@ public class CsvToExcelConverter extends JFrame {
 //            Map<String, List<GoldenSoftWork>> groupedRecords = records.stream()
 //                    .collect(Collectors.groupingBy(GoldenSoftWork::getEmployeeName));
             Map<String, List<GoldenSoftWork>> groupedRecords = records.stream()
-                    .filter(record -> EmployeeType.isValidEmployee(record.getEmployeeName()))
                     .collect(Collectors.groupingBy(GoldenSoftWork::getEmployeeName));
 
             // 获取模板工作表和用于格式化的模板行
@@ -444,12 +443,12 @@ public class CsvToExcelConverter extends JFrame {
 //
 //    }
 
-    private static void createIcon() {
+/*    private static void createIcon() {
         //设置左上角图标
         String imagePath = "goldenSoft.PNG";
         Image imageIcon = Toolkit.getDefaultToolkit().getImage(MainFrame.class.getClassLoader().getResource(imagePath));
         frame.setIconImage(imageIcon);
-    }
+    }*/
 
     private static List<GoldenSoftWork> convertCsvDataToList(List<String[]> csvData) {
         Integer countRow = 0;
@@ -517,11 +516,22 @@ public class CsvToExcelConverter extends JFrame {
 //                    int minutes = Integer.parseInt(attendanceDuration);
 //                    int hours = minutes / 60; // 直接取整数部分，不进行四舍五入
 //                    record.setAttendanceDuration(hours + "H");
-                    String attendanceDuration = values[9].trim().replace(" 分钟", "").trim();
-                    int minutes = Integer.parseInt(attendanceDuration);
+
+//                    String attendanceDuration = values[9].trim().replace(" 分钟", "").trim();
+//                    int minutes = Integer.parseInt(attendanceDuration);
+//                    double hours = (double) minutes / 60;
+//                    double roundedHours = Math.ceil(hours * 10) / 10.0;
+//                    record.setAttendanceDuration(String.format("%.1f", roundedHours));
+
+                    String attendanceDuration = values[13].trim();
+                    String minutesStr = attendanceDuration.replaceAll("[^0-9]", "").trim();
+                    int minutes = Integer.parseInt(minutesStr);
+
+                    minutes -= 60;
                     double hours = (double) minutes / 60;
                     double roundedHours = Math.ceil(hours * 10) / 10.0;
                     record.setAttendanceDuration(String.format("%.1f", roundedHours));
+
                 }
                 records.add(record);
             }
